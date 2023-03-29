@@ -15,6 +15,7 @@ import com.intuit.bookexchange.entities.Exchange;
 import com.intuit.bookexchange.entities.Product;
 import com.intuit.bookexchange.entities.User;
 import com.intuit.bookexchange.entities.Exchange.Status;
+import com.intuit.bookexchange.exceptions.ExchangeNotPossibleException;
 import com.intuit.bookexchange.exceptions.NotFoundException;
 import com.intuit.bookexchange.repositories.ExchangesRepository;
 
@@ -60,21 +61,16 @@ public class ExchangeService {
 
         if (initiatorExchange.getStatus() != Exchange.Status.EXCHANGE_PENDING
                 || acceptorExchange.getStatus() != Exchange.Status.EXCHANGE_PENDING) {
-            throw new IllegalStateException("Exchange request is not in pending state");
+            throw new ExchangeNotPossibleException("Exchange request is not in pending state");
         }
 
         Exchange completedInitiatorExchange = markExchangeAsCompleted(initiatorExchange,
                 acceptorExchange.getSenderProductId(),
                 acceptorExchange.getSenderUserId());
 
-        Exchange completedAcceptorExchange = markExchangeAsCompleted(acceptorExchange,
+        markExchangeAsCompleted(acceptorExchange,
                 initiatorExchange.getSenderProductId(),
                 initiatorExchange.getSenderUserId());
-
-        if (!completedInitiatorExchange.equals(completedAcceptorExchange)) {
-            throw new IllegalStateException(
-                    "Exchange request does not match for exchanger and exchangee.");
-        }
 
         updateUserRewardPoints(initiatorExchange.getSenderUserId(),
                 /* incrementInRewardPoints= */1);
@@ -86,19 +82,22 @@ public class ExchangeService {
 
     public Exchange borrowProduct(int exchangeId, BorrowProductRequest request) {
         Exchange exchange = getExchange(exchangeId);
+        User user = userService.getUser(request.getBorrowerUserId());
 
-        Exchange completedExchange = exchange.builder()
-                .status(Status.BOOK_BORROWED)
-                .receiverProductId(null)
-                .receiverUserId(request.getBorrowerUserId())
-                .build();
+        if (user.getRewardPoints() < 1) {
+            throw new ExchangeNotPossibleException("User does not have enough reward points");
+        }
 
-        exchangesRepository.save(completedExchange);
+        exchange.setStatus(Status.BOOK_BORROWED);
+        exchange.setReceiverUserId(request.getBorrowerUserId());
+        exchange.setReceiverProductId(null);
+
+        exchangesRepository.save(exchange);
 
         updateUserRewardPoints(exchange.getSenderUserId(), /* incrementInRewardPoints= */1);
         updateUserRewardPoints(request.getBorrowerUserId(), /* incrementInRewardPoints= */ -1);
 
-        return completedExchange;
+        return exchange;
     }
 
     public Exchange getExchange(int exchangeId) {
@@ -114,13 +113,13 @@ public class ExchangeService {
 
     // ---------------------- Helper Methods ------------------------------
 
-    private Exchange markExchangeAsCompleted(Exchange exchange,
-            Integer receiverProductId, Integer receiverUserId) {
-        return exchangesRepository.save(exchange.builder()
-                .status(Status.EXCHANGE_COMPLETED)
-                .receiverProductId(receiverProductId)
-                .receiverUserId(receiverUserId)
-                .build());
+    private Exchange markExchangeAsCompleted(Exchange exchange, Integer receiverProductId,
+            Integer receiverUserId) {
+        exchange.setStatus(Status.EXCHANGE_COMPLETED);
+        exchange.setReceiverProductId(receiverProductId);
+        exchange.setReceiverUserId(receiverUserId);
+
+        return exchangesRepository.save(exchange);
     }
 
     private User updateUserRewardPoints(int userId, int incrementInRewardPoints) {

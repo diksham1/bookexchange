@@ -1,5 +1,6 @@
 package com.intuit.bookexchange.dto;
 
+import com.intuit.bookexchange.entities.Exchange;
 import com.intuit.bookexchange.entities.Product;
 
 import lombok.Builder;
@@ -10,6 +11,7 @@ import lombok.Setter;
 @Builder
 @Setter
 public class ExchangeResponse {
+    private int exchangeRequestId;
     private Product exchangeProduct;
-    private UserResponse exchanger;
+    private Exchange.Status status;
 }

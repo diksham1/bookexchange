@@ -1,10 +1,10 @@
 package com.intuit.bookexchange.dto;
 
-import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 
-@Builder
 @Data
+@Getter
 public class BorrowProductRequest {
     private int borrowerUserId;
 }
