@@ -5,25 +5,39 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+import org.springframework.lang.Nullable;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Entity(name =  "users")
+@Entity(name = "exchanges")
+@Builder
 @Getter
 @Setter
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class Exchange {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
-    private String username;
-    private String password;   // TODO: Use a password encoder to store password
-    private String email;
-    private int rewardPoints;
-    private double rating;
+
+    private int senderUserId;
+    private int senderProductId;
+
+    public enum Status {
+        EXCHANGE_PENDING,
+        EXCHANGE_COMPLETED,
+        BOOK_BORROWED
+    }
+
+    private Status status;
+
+    @Nullable
+    private Integer receiverUserId;
+
+    @Nullable
+    private Integer receiverProductId;
 }

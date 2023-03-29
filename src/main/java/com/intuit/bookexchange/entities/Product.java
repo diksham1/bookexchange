@@ -4,26 +4,22 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-@Entity(name =  "users")
 @Getter
 @Setter
-@Builder
+@SuperBuilder(toBuilder = true)
+@Entity
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 @NoArgsConstructor
-@AllArgsConstructor
-public class User {
+public abstract class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
-    private String username;
-    private String password;   // TODO: Use a password encoder to store password
-    private String email;
-    private int rewardPoints;
-    private double rating;
+    private int productId;
+    private int ownerId;
 }
