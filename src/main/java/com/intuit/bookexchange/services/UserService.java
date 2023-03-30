@@ -55,4 +55,10 @@ public class UserService {
     public User updateUser(User user) {
         return userRepository.save(user);
     }
+
+    public User awardRewardPoints(int userId, int rewardPoints) {
+        User user = getUser(userId);
+        user.setRewardPoints(user.getRewardPoints() + rewardPoints);
+        return updateUser(user);
+    }
 }

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.intuit.bookexchange.dto.BorrowProductRequest;
@@ -21,16 +22,12 @@ import com.intuit.bookexchange.repositories.ExchangesRepository;
 
 @Service
 public class ExchangeService {
-    private final ExchangesRepository exchangesRepository;
-    private final ProductService productsService;
-    private final UserService userService;
-
-    public ExchangeService(ProductService productsService, ExchangesRepository exchangesRepository,
-            UserService userService) {
-        this.exchangesRepository = exchangesRepository;
-        this.productsService = productsService;
-        this.userService = userService;
-    }
+    @Autowired
+    ExchangesRepository exchangesRepository;
+    @Autowired
+    ProductService productsService;
+    @Autowired
+    UserService userService;
 
     public InitiateExchangeResponse initiateExchange(InitiateExchangeRequest request) {
         User user = userService.getUser(request.getOwnerUserId());
@@ -61,7 +58,9 @@ public class ExchangeService {
 
         if (initiatorExchange.getStatus() != Exchange.Status.EXCHANGE_PENDING
                 || acceptorExchange.getStatus() != Exchange.Status.EXCHANGE_PENDING) {
-            throw new ExchangeNotPossibleException("Exchange request is not in pending state");
+            throw new ExchangeNotPossibleException(String.format(
+                    "One or more of exchanges with ids %d %d is not in pending state", initiatorExchangeRequestId,
+                    request.getAcceptorExchangeRequestId()));
         }
 
         Exchange completedInitiatorExchange = markExchangeAsCompleted(initiatorExchange,
@@ -72,9 +71,9 @@ public class ExchangeService {
                 initiatorExchange.getSenderProductId(),
                 initiatorExchange.getSenderUserId());
 
-        updateUserRewardPoints(initiatorExchange.getSenderUserId(),
+        userService.awardRewardPoints(initiatorExchange.getSenderUserId(),
                 /* incrementInRewardPoints= */1);
-        updateUserRewardPoints(acceptorExchange.getSenderUserId(),
+        userService.awardRewardPoints(acceptorExchange.getSenderUserId(),
                 /* incrementInRewardPoints= */1);
 
         return completedInitiatorExchange;
@@ -88,14 +87,19 @@ public class ExchangeService {
             throw new ExchangeNotPossibleException("User does not have enough reward points");
         }
 
+        if (!exchange.getStatus().equals(Exchange.Status.EXCHANGE_PENDING)) {
+            throw new ExchangeNotPossibleException(String.format(
+                    "Exchange with id %d is not in pending state", exchangeId));
+        }
+
         exchange.setStatus(Status.BOOK_BORROWED);
         exchange.setReceiverUserId(request.getBorrowerUserId());
         exchange.setReceiverProductId(null);
 
         exchangesRepository.save(exchange);
 
-        updateUserRewardPoints(exchange.getSenderUserId(), /* incrementInRewardPoints= */1);
-        updateUserRewardPoints(request.getBorrowerUserId(), /* incrementInRewardPoints= */ -1);
+        userService.awardRewardPoints(exchange.getSenderUserId(), /* rewardPoints= */1);
+        userService.awardRewardPoints(request.getBorrowerUserId(), /* rewardPoints= */ -1);
 
         return exchange;
     }
@@ -120,11 +124,5 @@ public class ExchangeService {
         exchange.setReceiverUserId(receiverUserId);
 
         return exchangesRepository.save(exchange);
-    }
-
-    private User updateUserRewardPoints(int userId, int incrementInRewardPoints) {
-        User user = userService.getUser(userId);
-        user.setRewardPoints(user.getRewardPoints() + incrementInRewardPoints);
-        return userService.updateUser(user);
     }
 }
