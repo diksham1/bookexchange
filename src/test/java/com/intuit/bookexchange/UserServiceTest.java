@@ -2,9 +2,6 @@ package com.intuit.bookexchange;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,20 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
-import com.intuit.bookexchange.dto.BorrowProductRequest;
-import com.intuit.bookexchange.dto.CompleteExchangeRequest;
 import com.intuit.bookexchange.dto.CreateUserRequest;
-import com.intuit.bookexchange.dto.InitiateExchangeRequest;
-import com.intuit.bookexchange.dto.InitiateExchangeResponse;
-import com.intuit.bookexchange.entities.Book;
-import com.intuit.bookexchange.entities.Exchange;
 import com.intuit.bookexchange.entities.User;
-import com.intuit.bookexchange.exceptions.ExchangeNotPossibleException;
 import com.intuit.bookexchange.exceptions.InvalidCredentialsException;
 import com.intuit.bookexchange.exceptions.NotFoundException;
-import com.intuit.bookexchange.services.ExchangeService;
 import com.intuit.bookexchange.services.UserService;
 
 @SpringBootTest
@@ -35,21 +23,12 @@ import com.intuit.bookexchange.services.UserService;
 public class UserServiceTest {
 
     private static final int USER_ID_1 = 1;
-    private static final int USER_ID_2 = 2;
 
     private static final String USER_NAME_1 = "Diksha";
     private static final String USER_NAME_2 = "Tux";
 
     private static final String EMAIL_ID_1 = "diksha@gmail.com";
     private static final String EMAIL_ID_2 = "tux@gmail.com";
-
-    private static final User USER_1 = User.builder()
-            .id(USER_ID_1)
-            .build();
-
-    private static final User USER_2 = User.builder()
-            .id(USER_ID_2)
-            .build();
 
     @Autowired
     UserService userService;
