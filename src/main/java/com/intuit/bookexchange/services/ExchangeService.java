@@ -7,6 +7,7 @@ import java.util.stream.StreamSupport;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.common.flogger.FluentLogger;
 import com.intuit.bookexchange.dto.BorrowProductRequest;
 import com.intuit.bookexchange.dto.CompleteExchangeRequest;
 import com.intuit.bookexchange.dto.InitiateExchangeRequest;
@@ -22,6 +23,8 @@ import com.intuit.bookexchange.repositories.ExchangesRepository;
 
 @Service
 public class ExchangeService {
+    private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+
     @Autowired
     ExchangesRepository exchangesRepository;
     @Autowired
@@ -30,6 +33,8 @@ public class ExchangeService {
     UserService userService;
 
     public InitiateExchangeResponse initiateExchange(InitiateExchangeRequest request) {
+        logger.atInfo().log("Initiating exchange for product %s", request.getBookName());
+
         User user = userService.getUser(request.getOwnerUserId());
 
         Product savedProduct = productsService.createProduct(Book.builder()
@@ -52,6 +57,9 @@ public class ExchangeService {
     }
 
     public Exchange completeExchange(int initiatorExchangeRequestId, CompleteExchangeRequest request) {
+
+        logger.atInfo().log("Completing exchange for exchange ids %d %d",
+                initiatorExchangeRequestId, request.getAcceptorExchangeRequestId());
 
         Exchange initiatorExchange = getExchange(initiatorExchangeRequestId);
         Exchange acceptorExchange = getExchange(request.getAcceptorExchangeRequestId());
@@ -80,6 +88,7 @@ public class ExchangeService {
     }
 
     public Exchange borrowProduct(int exchangeId, BorrowProductRequest request) {
+        logger.atInfo().log("Borrowing product for exchange id %d", exchangeId);
         Exchange exchange = getExchange(exchangeId);
         User user = userService.getUser(request.getBorrowerUserId());
 
