@@ -87,8 +87,8 @@ public class ExchangeServiceTest {
 		assertEquals(AUTHOR_1, book.getAuthorName());
 	}
 
-@Test
-public void completeExchange_successful() {
+	@Test
+	public void completeExchange_successful() {
 		// Arrange.
 		when(mockUserService.awardRewardPoints(USER_ID_1, /* rewaardPoints= */1)).thenReturn(USER_1);
 		when(mockUserService.awardRewardPoints(USER_ID_2, /* rewaardPoints= */1)).thenReturn(USER_2);
